@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Computer Exam System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 30px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #ff6b6b, #f06595, #66a6ff, #89f7fe);
+      background-size: 400%;
+      z-index: -1;
+      filter: blur(10px);
+      opacity: 0.5;
+      animation: glow 8s linear infinite;
+    }
+
+    @keyframes glow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .fixed-title {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .fixed-title h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #ff6b6b, #66a6ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+    .fixed-title h4 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #e0e0e0;
+    }
+
+    .fixed-title p {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 30px;
+      background: linear-gradient(45deg, #ff6b6b, #f06595);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+      text-align: center;
+      margin: 10px 5px;
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 107, 107, 0.7);
+    }
+
+    .btn-success {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-success:hover {
+      box-shadow: 0 0 15px rgba(40, 167, 69, 0.7);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #66a6ff;
+      box-shadow: 0 0 8px rgba(102, 166, 255, 0.5);
+    }
+
+    .timer {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ff6b6b;
+      text-align: right;
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { text-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
+      to { text-shadow: 0 0 15px rgba(255, 107, 107, 0.8); }
+    }
+
+    .note {
+      background: rgba(255, 243, 205, 0.9);
+      color: #856404;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 234, 186, 0.5);
+    }
+
+    .note ul {
+      padding-left: 20px;
+    }
+
+    .note li {
+      margin-bottom: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Question Card Styles */
+    .question-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin: 20px 0;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-card h5 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #333;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #66a6ff;
+    }
+
+    /* Option List Styles */
+    .option-list {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .option-item {
+      position: relative;
+      padding: 12px 15px 12px 45px;
+      margin-bottom: 10px;
+      background: rgba(240, 240, 240, 0.8);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .option-item:hover {
+      background: rgba(220, 220, 220, 0.9);
+      transform: translateX(5px);
+    }
+
+    .option-item input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 50%;
+      left: 15px;
+      transform: translateY(-50%);
+      height: 20px;
+      width: 20px;
+      background-color: #eee;
+      border-radius: 50%;
+      border: 2px solid #66a6ff;
+      transition: all 0.3s ease;
+    }
+
+    .option-item:hover .checkmark {
+      background-color: #ddd;
+    }
+
+    .option-item input:checked ~ .checkmark {
+      background-color: #66a6ff;
+      border-color: #66a6ff;
+    }
+
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    .option-item input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    .option-item .checkmark:after {
+      top: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .option-text {
+      font-size: 16px;
+      color: #333;
+    }
+
+    /* Progress Indicator */
+    .progress-indicator {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+      gap: 8px;
+    }
+
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #dee2e6;
+      transition: all 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #66a6ff;
+      transform: scale(1.3);
+    }
+
+    .progress-dot.answered {
+      background: #28a745;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin: 30px 0;
+    }
+
+    /* Result Page */
+    #resultPage {
+      text-align: center;
+      padding: 40px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    #resultPage h2 {
+      font-size: 28px;
+      color: #28a745;
+      margin-bottom: 20px;
+    }
+
+    #resultPage p {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    
+    /* Subject selection */
+    .subject-select {
+      margin: 20px 0;
+    }
+    
+    .subject-select select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      background-color: white;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+  <!-- Admin Login Page -->
+  <div id="adminLoginPage" class="card">
+    <div class="fixed-title">
+      <h2>DISHA COMPUTER INSTITUTE</h2>
+      <h4>JAYSINGPUR BRANCH</h4>
+      <p class="fw-bold">ADMINISTRATOR LOGIN</p>
+    </div>
+    <div class="form-group">
+      <label for="adminID">Admin ID</label>
+      <input type="text" class="form-control" id="adminID" placeholder="Enter Admin ID" required>
+    </div>
+    <div class="form-group">
+      <label for="adminPassword">Password</label>
+      <input type="password" class="form-control" id="adminPassword" placeholder="Enter Password" required>
+    </div>
+    <button class="btn" onclick="adminLogin()">Login as Admin</button>
+  </div>
+
+  <!-- Student Login Page -->
+  <div id="studentLoginPage" class="card hidden">
+    <div class="fixed-title">
+      <h2>DISHA COMPUTER INSTITUTE</h2>
+      <h4>JAYSINGPUR BRANCH</h4>
+      <p id="examInfo">Exam Duration: 15 MINUTES</p>
+    </div>
+    <div class="form-group">
+      <label for="studentName">Student Name</label>
+      <input type="text" class="form-control" id="studentName" placeholder="Enter your name" required>
+    </div>
+    <div class="form-group">
+      <label for="formNumber">Form Number</label>
+      <input type="text" class="form-control" id="formNumber" placeholder="Enter your form number" required>
+    </div>
+    <div class="form-group subject-select">
+      <label for="subject">Select Subject</label>
+      <select id="subject" class="form-control" required>
+        <option value="">-- Select Subject --</option>
+        <option value="MS-EXCEL">MS-EXCEL</option>
+        <option value="PYTHON">PYTHON</option>
+        <option value="PHOTOSHOP">PHOTOSHOP</option>
+        <option value="COREL DRAW">COREL DRAW</option>
+        <option value="TALLY PRIME">TALLY PRIME</option>
+        <option value="MS WORD">MS WORD</option>
+        <option value="DATA SCIENCE">DATA SCIENCE</option>
+        <option value="C PROGRAMMING">C PROGRAMMING</option>
+        <option value="C++ PROGRAMMING">C++ PROGRAMMING</option>
+        <option value="CAD">CAD</option>
+      </select>
+    </div>
+    <button class="btn" onclick="startExam()">Login & Start Exam</button>
+    <div class="note">
+      <ul>
+        <li>⚡ Do not refresh the page during exam.</li>
+        <li>⚡ All questions are compulsory.</li>
+        <li>⚡ Each question carries 5 marks.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Exam Page -->
+  <div id="examPage" class="hidden">
+    <div class="fixed-title">
+      <h2>DISHA COMPUTER INSTITUTE</h2>
+      <h4>JAYSINGPUR BRANCH</h4>
+      <p id="examSubject">Subject: MS-EXCEL</p>
+      <p>Exam Duration: 15 MINUTES</p>
+    </div>
+    <div class="timer" id="timer">15:00</div>
+    <div class="note">
+      <ul>
+        <li>⚡ Do not refresh the page during exam.</li>
+        <li>⚡ All questions are compulsory.</li>
+        <li>⚡ Each question carries 5 marks.</li>
+      </ul>
+    </div>
+    
+    <div class="progress-indicator" id="progressIndicator"></div>
+    
+    <div class="card">
+      <div id="questionContainer" class="question-card"></div>
+
+      <div class="nav-buttons">
+        <button class="btn" onclick="prevQuestion()">Previous</button>
+        <button class="btn" onclick="saveAnswerAndNext()">Save & Next</button>
+        <button class="btn" onclick="nextQuestion()">Next</button>
+      </div>
+
+      <div style="text-align: center;">
+        <button id="submitBtn" class="btn btn-success hidden" onclick="submitExam()">Submit Exam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Page -->
+  <div id="resultPage" class="card hidden">
+    <h2>Successfully completed the exam!</h2>
+    <p id="resultText">Thank you for participating!</p>
+    <button class="btn" onclick="downloadResult()">Download Result PDF</button>
+  </div>
+</div>
+
+<script>
+  // Questions Data for all subjects
+  const questionBanks = {
+    "MS-EXCEL": [
+      { q: "What is Microsoft Excel?", options: ["Web browser","Word‑processing program","Spreadsheet application","Presentation tool"], answer: 2 },
+      { q: "What file extension is the default for Excel workbooks?", options: [".xls",".xlsx",".xlsm",".csv"], answer: 1 },
+      { q: "Which symbol begins an Excel formula?", options: ["/","f","=","."], answer: 2 },
+      { q: "What is the name given to the intersection of a row and a column?", options: ["Address","Cell","Range","Worksheet"], answer: 1 },
+      { q: "Which function adds up numbers in a range?", options: ["SUM()","AVERAGE()","COUNT()","MIN()"], answer: 0 },
+      { q: "What feature lets you display only rows that meet criteria?", options: ["Sorting","Filtering","PivotTable","Conditional Formatting"], answer: 1 },
+      { q: "Which function counts only numeric values in a range?", options: ["COUNT()","COUNTA()","COUNTIF()","SUMIF()"], answer: 0 },
+      { q: "Which function counts both numbers and text entries?", options: ["COUNT()","COUNTA()","COUNTIF()","COUNTIFS()"], answer: 1 },
+      { q: "What does the $ symbol in a cell reference do?", options: ["Makes text bold","Fixes row or column","Denotes currency","Starts formula"], answer: 1 },
+      { q: "What does TRIM() function do?", options: ["Deletes formatting","Removes extra spaces","Converts text to uppercase","Highlights duplicates"], answer: 1 },
+      { q: "What logical function returns TRUE only if all conditions are true?", options: ["OR()","AND()","IF()","SWITCH()"], answer: 1 },
+      { q: "What is the worksheet tab to insert a new sheet?", options: ["Home tab","Right-click sheet tab → Insert","File → New","Ctrl+S"], answer: 1 },
+      { q: "What data type is not supported in Excel?", options: ["Number","Character","Date/time","Label"], answer: 1 },
+      { q: "Which keyboard shortcut locks cell references in a formula?", options: ["Ctrl","Alt","F2","F4"], answer: 3 },
+      { q: "Which shortcut applies AutoSum quickly?", options: ["Alt+S","Ctrl+=","Alt+=","Ctrl+S"], answer: 2 },
+      { q: "What is COUNTA() used for?", options: ["Count numeric cells","Count non‑blank cells","Count blank cells","Count only text"], answer: 1 },
+      { q: "Which IF formula syntax is correct?", options: ["=IF(test, TRUE([value_if_true]), FALSE([value_if_false]))","=IF(test, [value_if_true], [value_if_false])","=IF:test,[value_if_true],[value_if_false]","None"], answer: 1 },
+      { q: "In Excel, what is a Range?", options: ["Single cell","Chart type","Group of cells","Formula"], answer: 2 },
+      { q: "What is VLOOKUP() used for?", options: ["Delete duplicate data","Sort columns vertically","Search in a column and retrieve data from another column","Apply filters automatically"], answer: 2 },
+      { q: "What does the Ribbon refer to?", options: ["Cell reference box","Formula bar","Toolbar at top with tabs","Macro recorder"], answer: 2 }
+    ],
+    "PYTHON": [
+      { q: "What is Python primarily used for?", options: ["Web development","Data analysis","Artificial Intelligence","All of the above"], answer: 3 },
+      { q: "Which of these is not a Python data type?", options: ["list","tuple","dict","array"], answer: 3 },
+      { q: "How do you create a comment in Python?", options: ["// comment","# comment","/* comment */","<!-- comment -->"], answer: 1 },
+      { q: "What is the output of print(3 * 'abc')?", options: ["abcabcabc","3abc","abc abc abc","Error"], answer: 0 },
+      { q: "Which keyword is used to define a function in Python?", options: ["def","function","define","func"], answer: 0 },
+      { q: "What does the len() function do?", options: ["Converts to lowercase","Returns length of an object","Rounds a number","Calculates logarithm"], answer: 1 },
+      { q: "Which module is used for working with dates in Python?", options: ["time","datetime","date","calendar"], answer: 1 },
+      { q: "What is the correct way to create a list in Python?", options: ["list = [1, 2, 3]","list = (1, 2, 3)","list = {1, 2, 3}","list = '1, 2, 3'"], answer: 0 },
+      { q: "Which operator is used for exponentiation in Python?", options: ["^","**","^^","//"], answer: 1 },
+      { q: "What does the range() function return?", options: ["A list","A tuple","An iterator","A dictionary"], answer: 2 },
+      { q: "How do you open a file in Python?", options: ["open('file.txt')","file.open('file.txt')","open.file('file.txt')","file('file.txt').open()"], answer: 0 },
+      { q: "What is PEP 8?", options: ["Python Enhancement Proposal","Python Error Protocol","Python Execution Process","Python Extension Package"], answer: 0 },
+      { q: "Which of these is not a Python framework?", options: ["Django","Flask","Pyramid","Laravel"], answer: 3 },
+      { q: "What does the __init__ method do?", options: ["Initializes a class","Terminates a program","Imports a module","Creates an iterator"], answer: 0 },
+      { q: "Which keyword is used for exception handling?", options: ["catch","except","throw","error"], answer: 1 },
+      { q: "What is NumPy used for?", options: ["Web development","Numerical computing","Game development","Mobile apps"], answer: 1 },
+      { q: "How do you install a Python package?", options: ["pip install package","python install package","install package","package.install()"], answer: 0 },
+      { q: "What does OOP stand for?", options: ["Object-Oriented Programming","Operational Output Process","Organized Operational Protocol","Object Output Process"], answer: 0 },
+      { q: "Which of these is a mutable data type?", options: ["tuple","string","list","frozenset"], answer: 2 },
+      { q: "What is the output of bool('False')?", options: ["False","True","Error","None"], answer: 1 }
+    ],
+    "PHOTOSHOP": [
+      { q: "What is Photoshop primarily used for?", options: ["Video editing","Image editing","3D modeling","Audio processing"], answer: 1 },
+      { q: "Which tool allows you to select irregular shapes?", options: ["Marquee Tool","Lasso Tool","Magic Wand","Crop Tool"], answer: 1 },
+      { q: "What does the Healing Brush tool do?", options: ["Paints with a brush","Removes imperfections","Creates shapes","Adjusts colors"], answer: 1 },
+      { q: "What is the shortcut to undo an action?", options: ["Ctrl+Z","Ctrl+X","Ctrl+C","Ctrl+V"], answer: 0 },
+      { q: "Which panel shows the history of your edits?", options: ["Layers","Properties","History","Adjustments"], answer: 2 },
+      { q: "What does the term 'DPI' stand for?", options: ["Dots Per Inch","Data Per Image","Digital Photo Interface","Display Pixel Information"], answer: 0 },
+      { q: "Which file format supports layers?", options: [".jpg",".png",".psd",".gif"], answer: 2 },
+      { q: "What is a layer mask used for?", options: ["To hide parts of a layer","To create 3D effects","To adjust brightness","To add text"], answer: 0 },
+      { q: "Which tool allows you to sample colors from an image?", options: ["Brush Tool","Eyedropper Tool","Gradient Tool","Pen Tool"], answer: 1 },
+      { q: "What does the term 'CMYK' stand for?", options: ["Color Model Yellow Key","Cyan Magenta Yellow Black","Computer Monitor Yellow Kiosk","Creative Mode Yellow Key"], answer: 1 },
+      { q: "Which filter creates a blur effect?", options: ["Sharpen","Noise","Gaussian Blur","Liquify"], answer: 2 },
+      { q: "What is the purpose of the Clone Stamp tool?", options: ["To copy pixels from one area to another","To adjust colors","To create shapes","To add text"], answer: 0 },
+      { q: "Which tool allows you to create vector paths?", options: ["Brush Tool","Pen Tool","Eraser Tool","Magic Wand"], answer: 1 },
+      { q: "What does the term 'RGB' stand for?", options: ["Red Green Blue","Right Gradient Balance","Raster Graphic Bitmap","Relative Gradient Blend"], answer: 0 },
+      { q: "Which adjustment layer changes the brightness of an image?", options: ["Hue/Saturation","Levels","Color Balance","Photo Filter"], answer: 1 },
+      { q: "What is the purpose of the Crop tool?", options: ["To remove unwanted edges","To adjust colors","To create selections","To add effects"], answer: 0 },
+      { q: "Which tool allows you to paint with soft edges?", options: ["Pencil Tool","Brush Tool with softness","Eraser Tool","Gradient Tool"], answer: 1 },
+      { q: "What does the term 'Opacity' refer to?", options: ["Color intensity","Transparency level","Image resolution","File size"], answer: 1 },
+      { q: "Which tool allows you to create straight lines?", options: ["Brush Tool with Shift key","Pen Tool","Line Tool","All of the above"], answer: 3 },
+      { q: "What is the purpose of the History Brush tool?", options: ["To paint with previous states","To erase pixels","To create shapes","To adjust colors"], answer: 0 }
+    ],
+    "COREL DRAW": [
+      { q: "What is CorelDRAW primarily used for?", options: ["Video editing","Vector graphics","3D modeling","Audio processing"], answer: 1 },
+      { q: "Which tool is used to create freehand drawings?", options: ["Rectangle Tool","Ellipse Tool","Freehand Tool","Text Tool"], answer: 2 },
+      { q: "What does the term 'vector graphic' mean?", options: ["Image made of pixels","Image made of mathematical paths","Low-resolution image","3D image"], answer: 1 },
+      { q: "Which tool allows you to select objects?", options: ["Pick Tool","Shape Tool","Zoom Tool","Fill Tool"], answer: 0 },
+      { q: "What is the shortcut to duplicate an object?", options: ["Ctrl+C then Ctrl+V","Ctrl+D","Alt+Drag","All of the above"], answer: 3 },
+      { q: "Which menu contains the PowerClip function?", options: ["File","Edit","Effects","Object"], answer: 3 },
+      { q: "What does the term 'CMYK' stand for?", options: ["Color Model Yellow Key","Cyan Magenta Yellow Black","Computer Monitor Yellow Kiosk","Creative Mode Yellow Key"], answer: 1 },
+      { q: "Which tool allows you to create perfect circles?", options: ["Rectangle Tool","Ellipse Tool with Ctrl","Polygon Tool","Freehand Tool"], answer: 1 },
+      { q: "What is the purpose of the Shape Tool?", options: ["To edit nodes of objects","To create new objects","To apply fills","To add text"], answer: 0 },
+      { q: "Which file format is native to CorelDRAW?", options: [".cdr",".ai",".eps",".svg"], answer: 0 },
+      { q: "What does the term 'bleed' refer to in printing?", options: ["Color separation","Extra area beyond trim size","Text alignment","Image resolution"], answer: 1 },
+      { q: "Which tool allows you to create text?", options: ["Text Tool","Shape Tool","Fill Tool","Outline Tool"], answer: 0 },
+      { q: "What is the purpose of the Blend tool?", options: ["To create transitions between objects","To adjust colors","To apply effects","To align objects"], answer: 0 },
+      { q: "Which panel contains object properties?", options: ["Layers","Properties","Color Palette","Toolbox"], answer: 1 },
+      { q: "What does the term 'RGB' stand for?", options: ["Red Green Blue","Right Gradient Balance","Raster Graphic Bitmap","Relative Gradient Blend"], answer: 0 },
+      { q: "Which tool allows you to create complex shapes from simple ones?", options: ["Weld","Trim","Intersect","All of the above"], answer: 3 },
+      { q: "What is the purpose of the Contour effect?", options: ["To create outlines around objects","To adjust colors","To apply textures","To align objects"], answer: 0 },
+      { q: "Which tool allows you to adjust perspective?", options: ["Envelope Tool","Extrude Tool","Drop Shadow Tool","Transparency Tool"], answer: 0 },
+      { q: "What does the term 'kerning' refer to?", options: ["Line spacing","Character spacing","Paragraph alignment","Font size"], answer: 1 },
+      { q: "Which tool allows you to create symmetrical designs?", options: ["Mirror Drawing","Shape Tool","Blend Tool","Contour Tool"], answer: 0 }
+    ],
+    "TALLY PRIME": [
+      { q: "What is Tally Prime primarily used for?", options: ["Graphic design","Accounting","Video editing","Programming"], answer: 1 },
+      { q: "Which shortcut key is used to create a company in Tally?", options: ["F1","F3","F11","Alt+F1"], answer: 3 },
+      { q: "What does the term 'GST' stand for?", options: ["Goods and Services Tax","General Sales Tax","Global Service Tax","Government Sales Tax"], answer: 0 },
+      { q: "Which voucher type is used for sales?", options: ["Payment","Receipt","Sales","Journal"], answer: 2 },
+      { q: "What is the shortcut to view the Balance Sheet?", options: ["F1","F2","F9","Alt+F1"], answer: 3 },
+      { q: "Which menu contains the option to create ledgers?", options: ["Gateway of Tally","Accounting Vouchers","Inventory Vouchers","Company Features"], answer: 0 },
+      { q: "What does the term 'VAT' stand for?", options: ["Value Added Tax","Virtual Account Transaction","Voucher Adjustment Tax","Vendor Account Transfer"], answer: 0 },
+      { q: "Which report shows all transactions for a ledger?", options: ["Balance Sheet","Profit & Loss","Ledger Vouchers","Trial Balance"], answer: 2 },
+      { q: "What is the purpose of the 'F12' key in Tally?", options: ["To configure settings","To create a voucher","To view reports","To exit the program"], answer: 0 },
+      { q: "Which voucher type is used for cash payments?", options: ["Payment","Receipt","Contra","Journal"], answer: 0 },
+      { q: "What does the term 'TDS' stand for?", options: ["Tax Deducted at Source","Total Debt Statement","Transaction Data Summary","Tally Data Storage"], answer: 0 },
+      { q: "Which feature allows you to track inventory?", options: ["Accounting","Inventory","Payroll","All of the above"], answer: 1 },
+      { q: "What is the shortcut to create a sales voucher?", options: ["F5","F6","F7","F8"], answer: 3 },
+      { q: "Which report shows the financial position of a company?", options: ["Balance Sheet","Profit & Loss","Cash Flow","All of the above"], answer: 3 },
+      { q: "What does the term 'FIFO' stand for in inventory?", options: ["First In First Out","Financial Input Financial Output","Fixed Inventory Fixed Output","Fully Integrated Financial Operation"], answer: 0 },
+      { q: "Which voucher type is used to transfer money between bank accounts?", options: ["Payment","Receipt","Contra","Journal"], answer: 2 },
+      { q: "What is the purpose of the 'Alt+F2' shortcut?", options: ["To change the period","To create a company","To view reports","To configure settings"], answer: 0 },
+      { q: "Which feature allows you to generate e-invoices?", options: ["GST","Inventory","Payroll","All of the above"], answer: 0 },
+      { q: "What does the term 'EOU' stand for in Tally?", options: ["Export Oriented Unit","Electronic Order Update","Expense Output Utility","End Of User"], answer: 0 },
+      { q: "Which report shows the profitability of a business?", options: ["Balance Sheet","Profit & Loss","Trial Balance","Cash Flow"], answer: 1 }
+    ],
+    "MS WORD": [
+      { q: "What is Microsoft Word primarily used for?", options: ["Word processing","Spreadsheet calculations","Presentation creation","Database management"], answer: 0 },
+      { q: "Which tab contains the option to insert a table?", options: ["Home","Insert","Page Layout","References"], answer: 1 },
+      { q: "What does the term 'Ctrl+B' do?", options: ["Bold text","Italic text","Underline text","Save document"], answer: 0 },
+      { q: "Which feature checks spelling and grammar?", options: ["Thesaurus","Word Count","Spell Check","Track Changes"], answer: 2 },
+      { q: "What is the shortcut to save a document?", options: ["Ctrl+S","Ctrl+N","Ctrl+O","Ctrl+P"], answer: 0 },
+      { q: "Which view shows how the document will look when printed?", options: ["Read Mode","Print Layout","Web Layout","Outline"], answer: 1 },
+      { q: "What does the term 'header' refer to?", options: ["Top margin of page","Bottom margin of page","Left margin of page","Right margin of page"], answer: 0 },
+      { q: "Which tool allows you to copy formatting?", options: ["Format Painter","Font Selector","Style Gallery","Theme Chooser"], answer: 0 },
+      { q: "What is the purpose of the 'Styles' feature?", options: ["To apply consistent formatting","To check spelling","To count words","To track changes"], answer: 0 },
+      { q: "Which feature allows you to combine letters with a data source?", options: ["Mail Merge","Track Changes","Comments","Macros"], answer: 0 },
+      { q: "What does the term 'portrait' orientation mean?", options: ["Page is taller than wide","Page is wider than tall","Page is square","Page has no orientation"], answer: 0 },
+      { q: "Which tab contains the option to add page numbers?", options: ["Home","Insert","Page Layout","View"], answer: 1 },
+      { q: "What is the purpose of the 'Thesaurus'?", options: ["To find synonyms","To check spelling","To count words","To track changes"], answer: 0 },
+      { q: "Which feature allows multiple people to edit a document?", options: ["Track Changes","Comments","Mail Merge","All of the above"], answer: 0 },
+      { q: "What does the term 'Ctrl+Z' do?", options: ["Undo","Redo","Copy","Paste"], answer: 0 },
+      { q: "Which tool allows you to create bulleted lists?", options: ["Bullets button","Numbering button","Multilevel List","All of the above"], answer: 3 },
+      { q: "What is the purpose of the 'Find and Replace' feature?", options: ["To locate and change text","To check spelling","To count words","To track changes"], answer: 0 },
+      { q: "Which feature allows you to protect a document with a password?", options: ["Restrict Editing","Track Changes","Mail Merge","Macros"], answer: 0 },
+      { q: "What does the term 'margins' refer to?", options: ["Blank spaces around page edges","Space between paragraphs","Space between lines","Space between words"], answer: 0 },
+      { q: "Which tab contains the option to add a cover page?", options: ["Home","Insert","Page Layout","References"], answer: 1 }
+    ],
+    "DATA SCIENCE": [
+      { q: "What is Data Science primarily concerned with?", options: ["Extracting insights from data","Hardware design","Network security","Game development"], answer: 0 },
+      { q: "Which programming language is most commonly used in Data Science?", options: ["Java","Python","C++","PHP"], answer: 1 },
+      { q: "What does the term 'EDA' stand for?", options: ["Electronic Data Analysis","Exploratory Data Analysis","Extended Data Algorithm","External Data Access"], answer: 1 },
+      { q: "Which library is used for numerical operations in Python?", options: ["NumPy","Pandas","Matplotlib","Scikit-learn"], answer: 0 },
+      { q: "What is the purpose of data visualization?", options: ["To present data graphically","To clean data","To store data","To secure data"], answer: 0 },
+      { q: "Which machine learning algorithm is used for classification?", options: ["Linear Regression","Decision Tree","K-Means","PCA"], answer: 1 },
+      { q: "What does the term 'SQL' stand for?", options: ["Structured Query Language","Simple Question Language","Statistical Quality Logic","System Query Link"], answer: 0 },
+      { q: "Which tool is commonly used for big data processing?", options: ["Hadoop","Excel","Photoshop","Word"], answer: 0 },
+      { q: "What is the purpose of feature scaling?", options: ["To normalize data range","To remove features","To add features","To visualize data"], answer: 0 },
+      { q: "Which metric is used to evaluate classification models?", options: ["Mean Squared Error","Accuracy","R-squared","All of the above"], answer: 1 },
+      { q: "What does the term 'API' stand for?", options: ["Application Programming Interface","Automated Process Integration","Advanced Programming Instruction","Algorithmic Parameter Index"], answer: 0 },
+      { q: "Which library is used for data manipulation in Python?", options: ["NumPy","Pandas","Matplotlib","Scikit-learn"], answer: 1 },
+      { q: "What is the purpose of cross-validation?", options: ["To assess model performance","To clean data","To visualize data","To store data"], answer: 0 },
+      { q: "Which technique is used to reduce dimensionality?", options: ["PCA","KNN","SVM","Random Forest"], answer: 0 },
+      { q: "What does the term 'JSON' stand for?", options: ["JavaScript Object Notation","Java Standard Object Network","JavaScript Oriented Notation","Java System Object Node"], answer: 0 },
+      { q: "Which algorithm is used for unsupervised learning?", options: ["Linear Regression","Logistic Regression","K-Means","Decision Tree"], answer: 2 },
+      { q: "What is the purpose of a confusion matrix?", options: ["To evaluate classification performance","To clean data","To visualize data","To store data"], answer: 0 },
+      { q: "Which tool is used for version control in Data Science?", options: ["Git","Excel","Tableau","Power BI"], answer: 0 },
+      { q: "What does the term 'NoSQL' refer to?", options: ["Non-relational databases","New SQL","Network SQL","Normalized SQL"], answer: 0 },
+      { q: "Which library is used for plotting in Python?", options: ["NumPy","Pandas","Matplotlib","Scikit-learn"], answer: 2 }
+    ],
+    "C PROGRAMMING": [
+      { q: "What is C primarily used for?", options: ["Web development","System programming","Game development","All of the above"], answer: 1 },
+      { q: "Which of these is not a valid data type in C?", options: ["int","float","string","double"], answer: 2 },
+      { q: "How do you create a comment in C?", options: ["// comment","# comment","/* comment */","Both 1 and 3"], answer: 3 },
+      { q: "What is the output of printf('%d', 5+3*2);?", options: ["16","11","10","Error"], answer: 1 },
+      { q: "Which operator is used for pointer dereferencing?", options: ["&","*","->","."], answer: 1 },
+      { q: "What does the sizeof() operator do?", options: ["Returns size of variable","Returns value of variable","Returns address of variable","Returns type of variable"], answer: 0 },
+      { q: "Which function is used to allocate memory dynamically?", options: ["malloc()","calloc()","realloc()","All of the above"], answer: 3 },
+      { q: "What is the correct way to declare a constant in C?", options: ["constant int x = 5;","final int x = 5;","const int x = 5;","fixed int x = 5;"], answer: 2 },
+      { q: "Which header file is needed for input/output operations?", options: ["<math.h>","<stdio.h>","<stdlib.h>","<string.h>"], answer: 1 },
+      { q: "What does the term 'recursion' mean?", options: ["Function calling itself","Looping structure","Conditional statement","Pointer operation"], answer: 0 },
+      { q: "Which operator has the highest precedence?", options: ["+","*","()","="], answer: 2 },
+      { q: "What is the purpose of the break statement?", options: ["To exit a loop","To skip current iteration","To terminate program","To print output"], answer: 0 },
+      { q: "Which loop is guaranteed to execute at least once?", options: ["for","while","do-while","All loops"], answer: 2 },
+      { q: "What does the term 'NULL' represent?", options: ["Zero","Empty string","Null pointer","All of the above"], answer: 2 },
+      { q: "Which function is used to compare two strings?", options: ["strcmp()","strcat()","strcpy()","strlen()"], answer: 0 },
+      { q: "What is the purpose of the continue statement?", options: ["To exit a loop","To skip current iteration","To terminate program","To print output"], answer: 1 },
+      { q: "Which operator is used to get the address of a variable?", options: ["&","*","->","."], answer: 0 },
+      { q: "What does the term 'pointer' refer to?", options: ["Variable that stores address","Variable that stores value","Function that returns value","Data type"], answer: 0 },
+      { q: "Which header file is needed for mathematical functions?", options: ["<math.h>","<stdio.h>","<stdlib.h>","<string.h>"], answer: 0 },
+      { q: "What is the purpose of the return statement?", options: ["To return value from function","To exit program","To print output","To declare variable"], answer: 0 }
+    ],
+    "C++ PROGRAMMING": [
+      { q: "What is C++ primarily used for?", options: ["System programming","Game development","Application development","All of the above"], answer: 3 },
+      { q: "Which concept is not supported in C++?", options: ["Object-Oriented Programming","Procedural Programming","Functional Programming","None of the above"], answer: 3 },
+      { q: "How do you create a comment in C++?", options: ["// comment","# comment","/* comment */","Both 1 and 3"], answer: 3 },
+      { q: "What is the output of cout << 5+3*2;?", options: ["16","11","10","Error"], answer: 1 },
+      { q: "Which operator is used for dynamic memory allocation?", options: ["malloc","new","alloc","create"], answer: 1 },
+      { q: "What does the term 'OOP' stand for?", options: ["Object-Oriented Programming","Operational Output Process","Organized Operational Protocol","Object Output Process"], answer: 0 },
+      { q: "Which access specifier makes members accessible only within the class?", options: ["public","private","protected","internal"], answer: 1 },
+      { q: "What is the correct way to declare a class in C++?", options: ["class MyClass {};","Class MyClass {};","new class MyClass {};","create class MyClass {};"], answer: 0 },
+      { q: "Which header file is needed for input/output operations?", options: ["<math.h>","<iostream>","<stdlib.h>","<string.h>"], answer: 1 },
+      { q: "What does the term 'polymorphism' mean?", options: ["Multiple forms","Single form","No forms","Data hiding"], answer: 0 },
+      { q: "Which operator is used for scope resolution?", options: [".","::","->","*"], answer: 1 },
+      { q: "What is the purpose of the virtual keyword?", options: ["To enable polymorphism","To create abstract classes","Both 1 and 2","To improve performance"], answer: 2 },
+      { q: "Which loop is guaranteed to execute at least once?", options: ["for","while","do-while","All loops"], answer: 2 },
+      { q: "What does the term 'constructor' refer to?", options: ["Function called when object is created","Function called when object is destroyed","Function that returns value","Data type"], answer: 0 },
+      { q: "Which function is used to compare two strings?", options: ["strcmp()","strcat()","strcpy()","strlen()"], answer: 0 },
+      { q: "What is the purpose of the this pointer?", options: ["To refer to current object","To create new object","To delete object","To compare objects"], answer: 0 },
+      { q: "Which operator is used to access members via pointer?", options: [".","::","->","*"], answer: 2 },
+      { q: "What does the term 'inheritance' refer to?", options: ["Creating new classes from existing ones","Hiding data","Polymorphism","Function overloading"], answer: 0 },
+      { q: "Which header file is needed for file operations?", options: ["<fstream>","<iostream>","<stdlib.h>","<string.h>"], answer: 0 },
+      { q: "What is the purpose of the destructor?", options: ["To clean up resources","To initialize objects","To return values","To print output"], answer: 0 }
+    ],
+    "CAD": [
+      { q: "What is CAD primarily used for?", options: ["Creating technical drawings","Word processing","Audio editing","Web development"], answer: 0 },
+      { q: "Which CAD software is developed by Autodesk?", options: ["SolidWorks","AutoCAD","CATIA","Creo"], answer: 1 },
+      { q: "What does the term 'CAD' stand for?", options: ["Computer-Aided Design","Computer-Assisted Drawing","Creative Architectural Design","Calculated Analytical Drawing"], answer: 0 },
+      { q: "Which command is used to create a circle in CAD?", options: ["C","CR","CIR","CIRCLE"], answer: 3 },
+      { q: "What is the purpose of layers in CAD?", options: ["To organize drawing elements","To change colors","To print drawings","To save files"], answer: 0 },
+      { q: "Which command is used to create a mirror image?", options: ["MIRROR","FLIP","REVERSE","SYMMETRY"], answer: 0 },
+      { q: "What does the term 'isometric view' refer to?", options: ["2D representation of 3D object","3D perspective view","Top view","Front view"], answer: 0 },
+      { q: "Which command is used to measure distance?", options: ["DIST","MEASURE","LENGTH","RULER"], answer: 0 },
+      { q: "What is the purpose of the hatch command?", options: ["To fill areas with patterns","To create 3D objects","To measure distances","To modify text"], answer: 0 },
+      { q: "Which file format is commonly used for CAD drawings?", options: [".dwg",".jpg",".mp3",".doc"], answer: 0 },
+      { q: "What does the term 'orthographic view' refer to?", options: ["2D views of 3D object","Perspective view","Isometric view","Wireframe view"], answer: 0 },
+      { q: "Which command is used to create a 3D box?", options: ["BOX","CUBE","3D","RECTANGLE"], answer: 0 },
+      { q: "What is the purpose of the extrude command?", options: ["To create 3D objects from 2D shapes","To measure distances","To modify text","To change colors"], answer: 0 },
+      { q: "Which command is used to rotate objects?", options: ["ROTATE","TURN","SPIN","FLIP"], answer: 0 },
+      { q: "What does the term 'wireframe' refer to?", options: ["3D representation showing edges only","Solid model","Surface model","2D drawing"], answer: 0 },
+      { q: "Which command is used to create a fillet?", options: ["FILLET","ROUND","CHAMFER","CURVE"], answer: 0 },
+      { q: "What is the purpose of the array command?", options: ["To create multiple copies in pattern","To measure distances","To modify text","To change colors"], answer: 0 },
+      { q: "Which command is used to trim objects?", options: ["TRIM","CUT","DELETE","ERASE"], answer: 0 },
+      { q: "What does the term 'rendering' refer to?", options: ["Creating photorealistic images","Measuring distances","Creating 2D drawings","Editing text"], answer: 0 },
+      { q: "Which command is used to create a chamfer?", options: ["CHAMFER","FILLET","ROUND","BEVEL"], answer: 0 }
+    ]
+  };
+
+  // Variables
+  const adminID = "admin";
+  const adminPassword = "1234";
+  let shuffledQuestions = [];
+  let currentQuestionIndex = 0;
+  let selectedAnswers = {};
+  let timer;
+  let timeLeft = 15 * 60;
+  let studentName = '';
+  let selectedSubject = '';
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', function() {
+    // No initialization needed for offline version
+  });
+
+  // Admin Login Function
+  function adminLogin() {
+    const id = document.getElementById('adminID').value.trim();
+    const pwd = document.getElementById('adminPassword').value.trim();
+    if (id === adminID && pwd === adminPassword) {
+      document.getElementById('adminLoginPage').classList.add('hidden');
+      document.getElementById('studentLoginPage').classList.remove('hidden');
+    } else {
+      alert('Invalid Admin ID or Password!');
+    }
+  }
+
+  // Start Exam Function
+  function startExam() {
+    studentName = document.getElementById('studentName').value.trim();
+    const formNumber = document.getElementById('formNumber').value.trim();
+    selectedSubject = document.getElementById('subject').value;
+    
+    if (!studentName || !formNumber || !selectedSubject) {
+      alert('Please fill all fields.');
+      return;
+    }
+    
+    document.getElementById('studentLoginPage').classList.add('hidden');
+    document.getElementById('examPage').classList.remove('hidden');
+    
+    // Update exam subject display
+    document.getElementById('examSubject').textContent = `Subject: ${selectedSubject}`;
+    
+    // Get questions for selected subject
+    const subjectQuestions = questionBanks[selectedSubject];
+    
+    // Shuffle questions and select first 20
+    shuffledQuestions = [...subjectQuestions].sort(() => 0.5 - Math.random()).slice(0, 20);
+    
+    startTimer();
+    displayQuestion();
+    updateProgressIndicator();
+  }
+
+  // Display Current Question
+  function displayQuestion() {
+    const q = shuffledQuestions[currentQuestionIndex];
+    const container = document.getElementById('questionContainer');
+    
+    let optionsHTML = '<ul class="option-list">';
+    q.options.forEach((opt, i) => {
+      optionsHTML += `
+        <li class="option-item">
+          <input type="radio" id="option${i}" name="option" value="${i}" 
+                 ${selectedAnswers[currentQuestionIndex] === i ? 'checked' : ''}>
+          <label for="option${i}" class="checkmark"></label>
+          <span class="option-text">${opt}</span>
+        </li>
+      `;
+    });
+    optionsHTML += '</ul>';
+    
+    container.innerHTML = `
+      <h5>Q${currentQuestionIndex + 1}: ${q.q}</h5>
+      ${optionsHTML}
+    `;
+    
+    // Add click event to each option item
+    document.querySelectorAll('.option-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        radio.checked = true;
+        saveAnswer();
+      });
+    });
+    
+    updateProgressIndicator();
+  }
+
+  // Save Answer Function
+  function saveAnswer() {
+    const selectedOption = document.querySelector('input[name="option"]:checked');
+    if (selectedOption) {
+      selectedAnswers[currentQuestionIndex] = parseInt(selectedOption.value);
+    }
+    checkAllAnswered();
+    updateProgressIndicator();
+  }
+
+  // Check if all questions are answered
+  function checkAllAnswered() {
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (answeredCount === shuffledQuestions.length) {
+      submitBtn.classList.remove('hidden');
+    } else {
+      submitBtn.classList.add('hidden');
+    }
+  }
+
+  // Navigation functions
+  function nextQuestion() {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      currentQuestionIndex++;
+      displayQuestion();
+    }
+  }
+
+  function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      displayQuestion();
+    }
+  }
+
+  function saveAnswerAndNext() {
+    saveAnswer();
+    nextQuestion();
+  }
+
+  // Timer functions
+  function startTimer() {
+    updateTimer();
+    timer = setInterval(() => {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        submitExam();
+      }
+    }, 1000);
+  }
+
+  function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer').textContent = 
+      `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  // Progress indicator
+  function updateProgressIndicator() {
+    const indicator = document.getElementById('progressIndicator');
+    indicator.innerHTML = '';
+    
+    shuffledQuestions.forEach((_, index) => {
+      const dot = document.createElement('div');
+      dot.className = 'progress-dot';
+      if (index === currentQuestionIndex) dot.classList.add('active');
+      if (selectedAnswers[index] !== undefined) dot.classList.add('answered');
+      dot.addEventListener('click', () => {
+        currentQuestionIndex = index;
+        displayQuestion();
+      });
+      indicator.appendChild(dot);
+    });
+  }
+
+  // Submit exam
+  function submitExam() {
+    clearInterval(timer);
+    
+    // Calculate score
+    let score = 0;
+    shuffledQuestions.forEach((q, index) => {
+      if (selectedAnswers[index] === q.answer) {
+        score++;
+      }
+    });
+    
+    // Store results
+    sessionStorage.setItem('examScore', score * 5); // 5 marks per question
+    sessionStorage.setItem('studentName', studentName);
+    sessionStorage.setItem('subject', selectedSubject);
+    
+    // Show result page
+    document.getElementById('examPage').classList.add('hidden');
+    document.getElementById('resultPage').classList.remove('hidden');
+    
+    // Update result text
+    const percentage = (score / shuffledQuestions.length) * 100;
+    let grade = '';
+    if (percentage >= 80) grade = 'A (Excellent)';
+    else if (percentage >= 60) grade = 'B (Good)';
+    else if (percentage >= 40) grade = 'C (Average)';
+    else grade = 'D (Needs Improvement)';
+    
+    document.getElementById('resultText').innerHTML = `
+      <p>Student: ${studentName}</p>
+      <p>Subject: ${selectedSubject}</p>
+      <p>Score: ${score * 5} / ${shuffledQuestions.length * 5}</p>
+      <p>Percentage: ${percentage.toFixed(2)}%</p>
+      <p>Grade: ${grade}</p>
+    `;
+  }
+
+  // Download result as PDF
+  function downloadResult() {
+  // Use the already loaded local jsPDF
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const score = sessionStorage.getItem('examScore');
+  const studentName = sessionStorage.getItem('studentName');
+  const subject = sessionStorage.getItem('subject');
+  const date = new Date().toLocaleString();
+  const totalMarks = shuffledQuestions.length * 5;
+  const percentage = (score / totalMarks) * 100;
+  let grade = '';
+  if (percentage >= 80) grade = 'A (Excellent)';
+  else if (percentage >= 60) grade = 'B (Good)';
+  else if (percentage >= 40) grade = 'C (Average)';
+  else grade = 'D (Needs Improvement)';
+
+  // Add content to PDF
+  doc.setFontSize(22);
+  doc.setTextColor(40, 167, 69);
+  doc.text('DISHA COMPUTER INSTITUTE', 105, 20, { align: 'center' });
+
+  doc.setFontSize(16);
+  doc.setTextColor(0, 0, 0);
+  doc.text('JAYSINGPUR BRANCH', 105, 30, { align: 'center' });
+
+  doc.setFontSize(14);
+  doc.text('Exam Result', 105, 45, { align: 'center' });
+
+  // Add a line
+  doc.setDrawColor(102, 166, 255);
+  doc.setLineWidth(0.5);
+  doc.line(20, 50, 190, 50);
+
+  // Student details
+  doc.setFontSize(12);
+  doc.text(`Student Name: ${studentName}`, 20, 60);
+  doc.text(`Subject: ${subject}`, 20, 70);
+  doc.text(`Date: ${date}`, 20, 80);
+
+  // Exam results
+  doc.setFontSize(14);
+  doc.setTextColor(102, 166, 255);
+  doc.text('Exam Summary', 20, 95);
+
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Total Questions: ${shuffledQuestions.length}`, 20, 105);
+  doc.text(`Correct Answers: ${score / 5}`, 20, 115);
+  doc.text(`Score: ${score} / ${totalMarks}`, 20, 125);
+  doc.text(`Percentage: ${percentage.toFixed(2)}%`, 20, 135);
+
+  // Grade
+  doc.setFontSize(14);
+  doc.setTextColor(220, 53, 69);
+  doc.text(`Grade: ${grade}`, 20, 150);
+
+  // Footer
+  doc.setFontSize(10);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Thank you for taking the exam. Best wishes for your future!', 105, 170, { align: 'center' });
+
+  // Save the PDF
+  doc.save(`${studentName.replace(/\s+/g, '_')}_${subject.replace(/\s+/g, '_')}_Result.pdf`);
+
+  // Reload after a short delay
+  setTimeout(() => {
+    location.reload();
+  }, 1000);
+}
+</script>
+</body>
+</html>
